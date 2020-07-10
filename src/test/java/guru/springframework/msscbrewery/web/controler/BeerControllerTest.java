@@ -1,5 +1,6 @@
 package guru.springframework.msscbrewery.web.controler;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import guru.springframework.msscbrewery.services.BeerService;
 import guru.springframework.msscbrewery.web.model.BeerDto;
@@ -21,9 +22,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(BeerController.class)
@@ -45,13 +46,14 @@ class BeerControllerTest {
     @BeforeEach
     void setUp() {
 
-        validBeer= BeerDto.builder()
+        validBeer = BeerDto.builder()
                 .id(UUID.randomUUID())
                 .beerName("Galaxy Cat")
                 .beerStyle("Pale Ale")
                 .upc(123456789012L)
                 .build();
     }
+
     @AfterEach
     void tearDown() {
         reset(beerService);
@@ -74,9 +76,9 @@ class BeerControllerTest {
     }
 
     @Test
-    public void  handlePost() throws Exception {
-
-        BeerDto beerDto =validBeer;
+    public void handlePost() throws Exception {
+        //given
+        BeerDto beerDto = validBeer;
         beerDto.setId(null);
 
         BeerDto savedDto = BeerDto.builder()
@@ -87,19 +89,44 @@ class BeerControllerTest {
         given(beerService.saveNewBeer(any())).willReturn(savedDto);
 
 
-
+        //when-then
         mockMvc.perform(post("/api/v1/beer/")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(beerDtoJson))
                 .andExpect(status().isCreated());
 
         ArgumentCaptor<BeerDto> beerDtoCaptor = ArgumentCaptor.forClass(BeerDto.class);
-        verify(beerService,times(1))
-                .saveNewBeer(beerDtoCaptor.capture());
+
+        then(beerService).should(times(1)).saveNewBeer(beerDtoCaptor.capture());
+
         BeerDto dtoArgument = beerDtoCaptor.getValue();
-       assertThat(dtoArgument.getBeerName()).isEqualTo("Galaxy Cat");
-       assertThat(dtoArgument.getBeerStyle()).isEqualTo("Pale Ale");
-       assertThat(dtoArgument.getUpc()).isEqualTo(123456789012L);
+        assertThat(dtoArgument.getBeerName()).isEqualTo("Galaxy Cat");
+        assertThat(dtoArgument.getBeerStyle()).isEqualTo("Pale Ale");
+        assertThat(dtoArgument.getUpc()).isEqualTo(123456789012L);
+
+    }
+
+    @Test
+    public void handleUpdate() throws Exception {
+        //given
+        BeerDto beerDto = validBeer;
+        String beerDtoJson = objectMapper.writeValueAsString(beerDto);
+
+        //when-then
+        mockMvc.perform(put("/api/v1/beer/" + validBeer.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(beerDtoJson))
+        .andExpect(status().isNoContent());
+
+        ArgumentCaptor<BeerDto> beerDtoCaptor = ArgumentCaptor.forClass(BeerDto.class);
+
+        then(beerService).should(times(1)).updateBeer(any(),beerDtoCaptor.capture());
+
+        BeerDto dtoArgument = beerDtoCaptor.getValue();
+
+        assertThat(dtoArgument.getBeerName()).isEqualTo("Galaxy Cat");
+        assertThat(dtoArgument.getBeerStyle()).isEqualTo("Pale Ale");
+        assertThat(dtoArgument.getUpc()).isEqualTo(123456789012L);
 
     }
 }
