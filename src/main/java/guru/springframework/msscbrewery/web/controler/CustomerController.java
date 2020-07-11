@@ -28,15 +28,16 @@ public class CustomerController {
     ResponseEntity handleCreateCustomer(@RequestBody CustomerDto customerDto){
         CustomerDto savedCustomerDto = customerSevice.saveNewCustomer(customerDto);
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Location" ,"/api/v1/customer" +savedCustomerDto.getId());
+        headers.add("Location" ,"/api/v1/customer" +savedCustomerDto.getId().toString());
         return new ResponseEntity(headers, HttpStatus.CREATED);
     }
 
     @PutMapping("/{customerId}")
-    public ResponseEntity<HttpStatus>  handleUpdate(@PathVariable("customerId") UUID customerId,
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void  handleUpdate(@PathVariable("customerId") UUID customerId,
                                                     @RequestBody CustomerDto customerDto ) {
         customerSevice.updateCustomer(customerId, customerDto);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+
     }
 
     @DeleteMapping("/{customerId}")
