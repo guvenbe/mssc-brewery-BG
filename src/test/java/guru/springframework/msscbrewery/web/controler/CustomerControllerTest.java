@@ -1,8 +1,10 @@
 package guru.springframework.msscbrewery.web.controler;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import guru.springframework.msscbrewery.services.CustomerSevice;
+import guru.springframework.msscbrewery.web.model.BeerDto;
 import guru.springframework.msscbrewery.web.model.CustomerDto;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
@@ -27,8 +29,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
@@ -80,7 +81,7 @@ class CustomerControllerTest {
         customerDto.setId(null);
         CustomerDto savedCustomerDto = CustomerDto.builder()
                 .id(UUID.randomUUID())
-                .name("New Csutomer")
+                .name("New Customer")
                 .build();
 
         String customerDtoJson = objectMapper.writeValueAsString(savedCustomerDto);
@@ -97,5 +98,33 @@ class CustomerControllerTest {
         CustomerDto dtoArgument = customerDtoCaptor.getValue();
         assertThat(dtoArgument.getName()).isEqualTo(savedCustomerDto.getName());
 
+    }
+
+    @Test
+    public void handleUpdate() throws Exception {
+        //given
+        CustomerDto customerDto = validCustomer;
+        String customeDtoJson = objectMapper.writeValueAsString(customerDto);
+
+        mockMvc.perform(put("/api/v1/customer/" + validCustomer.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(customeDtoJson))
+                .andExpect(status().isNoContent());
+
+        ArgumentCaptor<CustomerDto> customerDtoCaptor = ArgumentCaptor.forClass(CustomerDto.class);
+        then(customerSevice).should(times(1)).updateCustomer(any(), customerDtoCaptor.capture());
+        CustomerDto customerDtoCaptorValue = customerDtoCaptor.getValue();
+        assertThat(customerDtoCaptorValue.getName()).isEqualTo(customerDto.getName());
+    }
+
+    @Test
+    public  void deleteCustomer() throws Exception {
+        //given
+        CustomerDto customerDto = validCustomer;
+        mockMvc.perform(delete("/api/v1/customer/" + validCustomer.getId())
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+
+        then(customerSevice).should(times(1)).deleteCustomerById(validCustomer.getId());
     }
 }
