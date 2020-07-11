@@ -11,4 +11,9 @@ public class CustomerSeviceImpl implements CustomerSevice {
     public CustomerDto getCustomerById(UUID customerId) {
         return CustomerDto.builder().id(UUID.randomUUID()).name("Rochester Brewery").build();
     }
+
+    @Override
+    public CustomerDto saveNewCustomer(CustomerDto customerDto) {
+        return CustomerDto.builder().id(UUID.randomUUID()).name("Lotus Brewery").build();
+    }
 }

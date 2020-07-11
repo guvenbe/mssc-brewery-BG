@@ -129,4 +129,15 @@ class BeerControllerTest {
         assertThat(dtoArgument.getUpc()).isEqualTo(123456789012L);
 
     }
+
+    @Test
+    public  void deleteBeer() throws Exception {
+        //given
+        BeerDto beerDto = validBeer;
+        mockMvc.perform(delete("/api/v1/beer/" + validBeer.getId())
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+
+        then(beerService).should(times(1)).deleBeerById(validBeer.getId());
+    }
 }
